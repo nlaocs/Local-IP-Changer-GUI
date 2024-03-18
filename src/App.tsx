@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri'
 import { appWindow } from '@tauri-apps/api/window';
 import Button from '@mui/material/Button';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import AddIcon from '@mui/icons-material/Add';
 import Stack from '@mui/material/Stack';
 import ReactiveButton from 'reactive-button';
 import IconButton from '@mui/material/IconButton';
@@ -15,6 +15,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
 import CloseIcon from '@mui/icons-material/Close';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const modalStyle = {
   overlay: {
@@ -48,18 +49,6 @@ function App() {
   const [state, setState] = useState('idle');
   const [modalIsOpen, setIsOpen] = useState(false);
 
-  const onClickHandler = () => {
-    setState('loading');
-
-    // send an HTTP request
-    setTimeout(() => {
-      setState('success');
-      //setIsOpen(false); console.log("aaa");
-    }, 2000);
-  };
-
-
-
   document.addEventListener('contextmenu', event => event.preventDefault());
   return (
     <div className="App">
@@ -84,14 +73,23 @@ function App() {
             </div>
           </div>
         ))}
-        <div className="addbox" onClick={() => setIsOpen(true)}>
-          <AddCircleOutlineIcon id="addicon"/>
+        <div className="settings-container">
+          <div className="settingbutton" onClick={clickDisplayAlert}>
+            <SettingsIcon id="settingsicon"/>
+          </div>
+          <div className="addbox" onClick={() => setIsOpen(true)}>
+            <AddIcon id="addicon"/>
+          </div>
         </div>
-        <Modal isOpen={modalIsOpen} ariaHideApp={false} className="addmenu" overlayClassName="addmenuoverlay">
-          <h2 id="modalh2">Modal Content</h2>
-          <button onClick={() => { setIsOpen(false); console.log("aaa"); }}>close</button>
+        <Modal isOpen={modalIsOpen} ariaHideApp={false} className="addmenu" closeTimeoutMS={300} overlayClassName="addmenuoverlay">
+          <IconButton aria-label="close" onClick={() => { setIsOpen(false); console.log("aaa"); }}>
+            <CloseIcon className="closeIcon" fontSize="large" />
+          </IconButton>
+          
+          <h2 id="modalh2">設定追加</h2>
           <Box
             component="form"
+            className="settings-input-field"
             sx={{
               '& > :not(style)': { m: 1, width: '25ch' },
               '& .MuiInputBase-input': {
@@ -124,6 +122,8 @@ function App() {
           </Box>
           <p className="addmenuclosebutton">
             <ReactiveButton
+              className="settingmenuaddbutton"
+              size="large"
               buttonState={state}
               idleText={
                 <span>
@@ -138,17 +138,17 @@ function App() {
               color="blue"
               successText={
                 <span>
-                  追加完了 <CheckIcon sx={{ fontSize: 15}}/>
+                  追加完了 <CheckIcon sx={{ fontSize: 15}} id="checkicon"/>
                 </span>
               }
-          
-
-              onClick={onClickHandler}
+              onClick={() => {
+                setState('loading');
+                setTimeout(() => {
+                  setState('success');
+                }, 2000);
+              }}
             />
           </p>
-          <IconButton aria-label="close" onClick={() => { setIsOpen(false); console.log("aaa"); }}>
-            <CloseIcon className="closeIcon" fontSize="large" />
-          </IconButton>
         </Modal>
       </div>
       </div>
