@@ -17,6 +17,14 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+#[tauri::command]
+fn testfn(ip: String, mac: String, gateway: String, ssid: String) {
+    println!("SSID: {}", ssid);
+    println!("IP: {}", ip);
+    println!("MAC: {}", mac);
+    println!("Gateway: {}", gateway);
+}
+
 /*#[tauri::command]
 async fn create_window(app: tauri::AppHandle) {
     println!("create_window called");
@@ -34,7 +42,7 @@ async fn create_window(app: tauri::AppHandle) {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![])
+        .invoke_handler(tauri::generate_handler![testfn])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
