@@ -25,7 +25,7 @@
         "title": "Local IP Changer GUI",
         "label": "main",
         "width": 415,
-        "height": 700,
+        "height": 800,
         "maximized": false,
         "resizable": false
       }

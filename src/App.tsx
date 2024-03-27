@@ -1,14 +1,9 @@
+import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri'
-import { appWindow } from '@tauri-apps/api/window';
-import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
-import Stack from '@mui/material/Stack';
-import ReactiveButton from 'reactive-button';
 import IconButton from '@mui/material/IconButton';
 import Modal from "react-modal";
-import { DoneOutlinedIcon } from "@xpadev-net/material-icons";
-import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -16,6 +11,14 @@ import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl'
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
 
 const modalStyle = {
   overlay: {
@@ -48,8 +51,29 @@ function open_addmenu() {
 function App() {
   const [state, setState] = useState('idle');
   const [modalIsOpen, setIsOpen] = useState(false);
+  const [settingmodalIsOpen, setSettingIsOpen] = useState(false);
+  const [ssid, setSSID] = React.useState('');
+  const handleChange = (event: SelectChangeEvent) => {
+    setSSID(event.target.value as string);
+  };
+  const [wifi, setWifi] = React.useState('');
+  const handleChange2 = (event: SelectChangeEvent) => {
+    setWifi(event.target.value as string);
+  };
+  const wifisettingbutton = (device: string) => {
+    setSettingIsOpen(false);
+    console.log(device);
+    invoke('testfn2', { test: device });
+  };
+  const settingaddbutton = () => {
+    setIsOpen(false);
+  };
+  // 両方の関数に引数を入れてそれを使ってファイルに保存
 
   document.addEventListener('contextmenu', event => event.preventDefault());
+  useEffect(() => {
+    
+  }, []);
   return (
     <div className="App">
       <div className="Appname">
@@ -59,7 +83,7 @@ function App() {
         {Array(10).fill(0).map((_, index) => (
           <div key={index} className="box">
             ここにブロック状の設定が来る予定<hr />
-            <div>自動設定</div><div className="wifiname">(wifi-test1)</div>
+            <div>自動設定</div><div className="wifiname">(wifi-test{index})</div>
             <div className="icon">
               <IconButton aria-label="delete" onClick={clickDisplayAlert}>
                 <DeleteIcon className="deleteIcon" fontSize="large" />
@@ -74,13 +98,52 @@ function App() {
           </div>
         ))}
         <div className="settings-container">
-          <div className="settingbutton" onClick={clickDisplayAlert}>
-            <SettingsIcon id="settingsicon"/>
+          <div className="settingbutton" onClick={() => setSettingIsOpen(true)}>
+              <SettingsIcon id="settingsicon"/>
           </div>
           <div className="addbox" onClick={() => setIsOpen(true)}>
-            <AddIcon id="addicon"/>
+              <AddIcon id="addicon"/>
           </div>
         </div>
+        <Modal isOpen={settingmodalIsOpen} ariaHideApp={false} className="settingmenu" closeTimeoutMS={300} overlayClassName="settingmenuoverlay">
+          <IconButton aria-label="close" onClick={() => { setSettingIsOpen(false); console.log("aaa"); }}>
+            <CloseIcon className="closeIcon" fontSize="large" />
+          </IconButton>
+          <h2 id="modalh2">環境設定</h2>
+          <div className="wifidevice">
+          </div>
+          <div className="select">
+            <Box sx={{ minWidth: 120 }}>
+              <FormControl fullWidth>
+                <InputLabel id="wifilabel">WiFiデバイス</InputLabel>
+                <Select
+                  MenuProps={{
+                    sx: {
+                      "&& .Mui-selected": {
+                        backgroundColor: "#83aaff"
+                      }
+                    }
+                  }}
+                  labelId="wifilabel"
+                  id="wifiselect"
+                  value={wifi}
+                  label="wifiselect"
+                  onChange={handleChange2}
+                >
+                  
+                  <MenuItem value={"test"}>test</MenuItem>
+                  <MenuItem value={20}>Twenty</MenuItem>
+                  <MenuItem value={30}>Thirty</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </div>
+          <div className="wifidevicebutton" onClick={() => wifisettingbutton(wifi)}>
+            完了
+          </div>
+        </Modal>
+
+
         <Modal isOpen={modalIsOpen} ariaHideApp={false} className="addmenu" closeTimeoutMS={300} overlayClassName="addmenuoverlay">
           <IconButton aria-label="close" onClick={() => { setIsOpen(false); console.log("aaa"); }}>
             <CloseIcon className="closeIcon" fontSize="large" />
@@ -116,11 +179,55 @@ function App() {
             noValidate
             autoComplete="off"
           >
-            <TextField className="outlined-basic" label="IP" variant="outlined" />
-            <TextField className="outlined-basic" label="サブネットマスク" variant="outlined" />
-            <TextField className="outlined-basic" label="ゲートウェイ" variant="outlined" />
+            <FormControl >
+              <FormLabel id="demo-row-radio-buttons-group-label">タイプ</FormLabel>
+              <RadioGroup
+                row
+                aria-labelledby="demo-row-radio-buttons-group-label"
+                name="row-radio-buttons-group"
+                defaultValue="dhcp"
+                sx={{
+                  color: '#FF0000',
+                }}
+              >
+                <FormControlLabel value="dhcp" control={<Radio />} label="自動" className="wifitypeselect" />
+                <FormControlLabel value="manual" control={<Radio />} label="手動" className="wifitypeselect" />
+              </RadioGroup>
+            </FormControl>
+            <TextField className="outlined-basic" label="名前" variant="outlined" defaultValue="" />
+            <TextField className="outlined-basic" label="IP" variant="outlined" defaultValue="192.168." />
+            <TextField className="outlined-basic" label="サブネットマスク" variant="outlined" defaultValue="255.255.255.0" />
+            <TextField className="outlined-basic" label="ゲートウェイ" variant="outlined" defaultValue="192.168."/>
+            <div className="ssidbox">
+              <Box sx={{ minWidth: 120 }}>
+                <FormControl fullWidth>
+                  <InputLabel id="ssidlabel">SSID</InputLabel>
+                  <Select
+                    MenuProps={{
+                      sx: {
+                        "&& .Mui-selected": {
+                          backgroundColor: "#83aaff"
+                        }
+                      }
+                    }}
+                    labelId="ssidlabel"
+                    id="ssidselect"
+                    value={ssid}
+                    label="ssid"
+                    onChange={handleChange}
+                  >
+                    <MenuItem value={10}>test1</MenuItem>
+                    <MenuItem value={20}>test2</MenuItem>
+                    <MenuItem value={30}>test3</MenuItem>
+                    <MenuItem value={40}>test4</MenuItem>
+                    <MenuItem value={50}>test5</MenuItem>
+                    
+                  </Select>
+                </FormControl>
+              </Box>
+            </div>
           </Box>
-          <p className="addmenuclosebutton">
+          {/*<p className="addmenuclosebutton">
             <ReactiveButton
               className="settingmenuaddbutton"
               size="large"
@@ -148,7 +255,10 @@ function App() {
                 }, 2000);
               }}
             />
-          </p>
+          </p>*/}
+          <div className="addmenubutton" onClick={settingaddbutton}>
+            追加
+          </div>
         </Modal>
       </div>
       </div>

@@ -25,6 +25,11 @@ fn testfn(ip: String, mac: String, gateway: String, ssid: String) {
     println!("Gateway: {}", gateway);
 }
 
+#[tauri::command]
+fn testfn2(test: String) {
+    println!("debug: {}", test);
+}
+
 /*#[tauri::command]
 async fn create_window(app: tauri::AppHandle) {
     println!("create_window called");
@@ -42,7 +47,7 @@ async fn create_window(app: tauri::AppHandle) {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![testfn])
+        .invoke_handler(tauri::generate_handler![testfn, testfn2])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

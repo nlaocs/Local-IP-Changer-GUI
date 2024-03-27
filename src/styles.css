@@ -45,8 +45,8 @@
 }
 
 .addbox {
-  border: solid 1px #00ddffb8;
-  background-color: #00ddffb8;
+  border: #9b9b9b75 solid 2px;
+  background-color: #3957ff6d;
   border-radius: 15px;
   text-align: center;
   width: 287px;
@@ -66,9 +66,64 @@
   
 }
 
+
+
+.MuiMenu-root ul{
+  background-color: rgb(72, 72, 72);
+  color: #ffffff;
+}
+
+#demo-row-radio-buttons-group-label {
+  text-align: left;
+  
+}
+
+
+.wifidevicebutton {
+  border: #9b9b9b75 solid 2px;
+  background-color: #5a5a5a6d;
+  border-radius: 15px;
+  text-align: center;
+  width: 50px;
+  padding: 15px 15px;
+  font-size: 20px;
+  color: #ffffff;
+  transition: background-color 0.1s linear;
+  cursor: pointer;
+  backdrop-filter: blur(3px);
+  margin: auto;
+  margin-top: 45px;
+}
+
+.wifidevicebutton:hover {
+  border: #9b9b9b75 solid 2px;
+  background-color: #8f8f8f6d;
+}
+
+.addmenubutton {
+  border: #9b9b9b75 solid 2px;
+  background-color: #4e4e4e6d;
+  border-radius: 15px;
+  text-align: center;
+  width: 50px;
+  padding: 15px 15px;
+  font-size: 20px;
+  color: #ffffff;
+  transition: background-color 0.1s linear;
+  cursor: pointer;
+  backdrop-filter: blur(3px);
+  margin: auto;
+  margin-top: 25px;
+}
+
+.addmenubutton:hover {
+  border: #9b9b9b75 solid 2px;
+  background-color: #8f8f8f6d;
+}
+
 .settingbutton {
-  border: solid 1px #00ddffb8;
-  background-color: #00ddffb8;
+  border: #9b9b9b75 solid 2px;
+  background-color: #3957ff6d;
   border-radius: 15px;
   transform: translateX(1px);
   width: 30px;
@@ -96,13 +151,13 @@
 }
 
 .addbox:hover {
-  background-color: #a0d6de;
-  color: #303030;
+  border: #9b9b9b75 solid 2px;
+  background-color: #8698ff6d;
 }
 
 .settingbutton:hover {
-  background-color: #a0d6de;
-  color: #303030;
+  border: #9b9b9b75 solid 2px;
+  background-color: #8698ff6d;
 }
 
 #addicon {
@@ -113,10 +168,13 @@
   transform: translateY(1px) translateX(2px) scale(1.3);
 }
 
-.settingmenuaddbutton {
-
+.wifidevice {
+	overflow: hidden;
+	width: 90%;
+	margin: 25px auto;
+	text-align: center;
+  
 }
-
 
 .Appname {
   width: 100%;
@@ -151,6 +209,29 @@
   border-radius: 15px;
   filter: drop-shadow(10px 10px 4px rgba(0, 0, 0, 0.25));
   opacity: 1;
+  margin-bottom: 10px;
+}
+
+.settingmenu {
+  justify-content: center;
+  align-items: center;
+  margin-top: 150px;
+  margin-bottom: 150px;
+  position: fixed; 
+  inset: 40px; 
+  background: #303030; 
+  overflow: auto; 
+  outline: none; 
+  padding: 20px;
+  border-radius: 15px;
+  filter: drop-shadow(10px 10px 4px rgba(0, 0, 0, 0.25));
+  opacity: 1;
+}
+
+.settingmenuoverlay {
+  position: fixed; 
+  inset: 0px; 
+  background-color: rgba(138, 138, 138, 0.75);
 }
 
 .ReactModal__Overlay {
@@ -168,7 +249,7 @@
 
 #modalh2 {
   text-align: center;
-  margin-top: 15px;
+  margin-top: 10px;
 }
 
 .addmenuclosebutton {
@@ -178,9 +259,22 @@
   left: 50%;
   transform: translateX(-50%);
   font-size: 5px;
-  /*ボタンのデカさを少しデカくしたい*/
-  
+}
 
+#wifilabel {
+  color: #ffffffaf;
+  font-size: 17px;
+}
+
+#wifiselect {
+  border: solid 1.5px #ffffffb8;
+  color: white;
+  background-color: #3f3f3f;
+}
+
+.ssidbox {
+  transform: translateX(29px);
+  text-align: left;
 }
 
 .deleteIcon {
