@@ -20,36 +20,20 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 
-const modalStyle = {
-  overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    backgroundColor: "rgba(0,0,0,0.85)"
-  },
-  content: {
-    position: "absolute",
-    top: "5rem",
-    left: "5rem",
-    right: "5rem",
-    bottom: "5rem",
-    backgroundColor: "paleturquoise",
-    borderRadius: "1rem",
-    padding: "1.5rem"
-  }
-};
 
 function clickDisplayAlert() {
   console.log("ボタンがクリックされました！");
 }
 
-function open_addmenu() {
-  console.log("ボタンがクリックされました！");
+async function get_device_list(): Promise<number[]> {
+  const getDeviceList: string = await invoke("t_get_device_list");
+  const deviceList: number[] = JSON.parse(getDeviceList);
+  console.log(deviceList);
+  return deviceList;
 }
 
 
 function App() {
-  const [state, setState] = useState('idle');
   const [modalIsOpen, setIsOpen] = useState(false);
   const [settingmodalIsOpen, setSettingIsOpen] = useState(false);
   const [ssid, setSSID] = React.useState('');
@@ -68,7 +52,16 @@ function App() {
   const settingaddbutton = () => {
     setIsOpen(false);
   };
-  // 両方の関数に引数を入れてそれを使ってファイルに保存
+  
+
+  // からのdevicelistを作ってpush_settings_buttonの中で定義したい
+  const [deviceList, setDeviceList] = React.useState<number[]>([]);
+  const push_settings_button = () => {
+    setSettingIsOpen(true);
+    get_device_list().then((deviceList) => {
+      setDeviceList(deviceList);
+    });
+  }
 
   document.addEventListener('contextmenu', event => event.preventDefault());
   useEffect(() => {
@@ -98,7 +91,7 @@ function App() {
           </div>
         ))}
         <div className="settings-container">
-          <div className="settingbutton" onClick={() => setSettingIsOpen(true)}>
+          <div className="settingbutton" onClick={push_settings_button}>
               <SettingsIcon id="settingsicon"/>
           </div>
           <div className="addbox" onClick={() => setIsOpen(true)}>
@@ -130,10 +123,9 @@ function App() {
                   label="wifiselect"
                   onChange={handleChange2}
                 >
-                  
-                  <MenuItem value={"test"}>test</MenuItem>
-                  <MenuItem value={20}>Twenty</MenuItem>
-                  <MenuItem value={30}>Thirty</MenuItem>
+                  {deviceList.map((device) => (
+                    <MenuItem value={device}>{device}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
