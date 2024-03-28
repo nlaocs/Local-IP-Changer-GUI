@@ -15,10 +15,10 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl'
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import Radio from '@mui/material/Radio';
+import { Radio, FormControlLabel } from '@mui/material';
 import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
+import { styled } from '@mui/system';
 
 
 function clickDisplayAlert() {
@@ -32,6 +32,25 @@ async function get_device_list(): Promise<number[]> {
   return deviceList;
 }
 
+async function get_ssid(): Promise<number[]> {
+  const getSSID: string = await invoke("t_get_ssid");
+  const ssid: number[] = JSON.parse(getSSID);
+  console.log(ssid);
+  return ssid;
+}
+
+async function get_config_device(): Promise<string> {
+  const getConfigDevice: string = await invoke("t_get_config_device");
+  console.log(getConfigDevice);
+  return getConfigDevice;
+}
+
+const GreenRadio = styled(Radio)({
+  color: '#cccccc',
+  '&.Mui-checked': {
+    color: '#9ec3ff',
+  },
+});
 
 function App() {
   const [modalIsOpen, setIsOpen] = useState(false);
@@ -44,24 +63,66 @@ function App() {
   const handleChange2 = (event: SelectChangeEvent) => {
     setWifi(event.target.value as string);
   };
-  const wifisettingbutton = (device: string) => {
-    setSettingIsOpen(false);
-    console.log(device);
-    invoke('testfn2', { test: device });
-  };
   const settingaddbutton = () => {
     setIsOpen(false);
   };
-  
 
-  // からのdevicelistを作ってpush_settings_buttonの中で定義したい
+  const [selectedValue, setSelectedValue] = useState('dhcp');
+  const handleChangeadd = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedValue((event.target as HTMLInputElement).value);
+  };
+
+  const [input_name, setInputName] = React.useState('');
+  const handleInputNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputName(event.target.value);
+  };
+
+  const [input_ip, setInputIP] = React.useState('');
+  const handleInputIPChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputIP(event.target.value);
+  };
+
+  const [input_subnetmask, setInputSubnetmask] = React.useState('');
+  const handleInputSubnetmaskChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputSubnetmask(event.target.value);
+  };
+
+  const [input_gateway, setInputGateway] = React.useState('');
+  const handleInputGatewayChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputGateway(event.target.value);
+  };
+
+  // tauri--------------------------------------------------------
   const [deviceList, setDeviceList] = React.useState<number[]>([]);
   const push_settings_button = () => {
     setSettingIsOpen(true);
     get_device_list().then((deviceList) => {
       setDeviceList(deviceList);
+      get_config_device_string();
     });
   }
+
+  const [ssidList, setSSIDList] = React.useState<number[]>([]);
+  const push_add_button = () => {
+    setIsOpen(true);
+    get_ssid().then((ssidList) => {
+      setSSIDList(ssidList);
+    });
+  }
+
+  const wifisettingbutton = (device: string) => {
+    setSettingIsOpen(false);
+    console.log(device);
+    invoke('t_set_config_device', {device: device});
+  };
+  
+  const get_config_device_string = async () => {
+    const deviceName: string = await get_config_device();
+    setWifi(deviceName);
+  }
+
+
+  // -------------------------------------------------------------
 
   document.addEventListener('contextmenu', event => event.preventDefault());
   useEffect(() => {
@@ -94,7 +155,7 @@ function App() {
           <div className="settingbutton" onClick={push_settings_button}>
               <SettingsIcon id="settingsicon"/>
           </div>
-          <div className="addbox" onClick={() => setIsOpen(true)}>
+          <div className="addbox" onClick={push_add_button}>
               <AddIcon id="addicon"/>
           </div>
         </div>
@@ -125,6 +186,7 @@ function App() {
                 >
                   {deviceList.map((device) => (
                     <MenuItem value={device}>{device}</MenuItem>
+                    
                   ))}
                 </Select>
               </FormControl>
@@ -151,7 +213,7 @@ function App() {
                 color: '#FFFFFF',    // 入力文字の色
               },
               '& label': {
-                color: '#AAAAAA', // 通常時のラベル色 
+                color: '#d6d6d6', // 通常時のラベル色 
               },
               '& .MuiInput-underline:before': {
                 borderBottomColor: '#CCCCCC', // 通常時のボーダー色
@@ -160,6 +222,17 @@ function App() {
                 borderBottomColor: '#DDDDDD',  // ホバー時のボーダー色
               },
               '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: '#CCCCCC',    // 通常時のボーダー色(アウトライン)
+                },
+                '&:hover fieldset': {
+                  borderColor: '#DDDDDD',    // ホバー時のボーダー色(アウトライン)
+                },
+              },
+              "& .MuiInputBase-input.Mui-disabled": {
+                WebkitTextFillColor: "#858585",
+                backgroundColor: "#2b2b2b",
+                borderColor: "#858585",
                 '& fieldset': {
                   borderColor: '#CCCCCC',    // 通常時のボーダー色(アウトライン)
                 },
@@ -178,18 +251,47 @@ function App() {
                 aria-labelledby="demo-row-radio-buttons-group-label"
                 name="row-radio-buttons-group"
                 defaultValue="dhcp"
-                sx={{
-                  color: '#FF0000',
-                }}
+                onChange={handleChangeadd}
               >
-                <FormControlLabel value="dhcp" control={<Radio />} label="自動" className="wifitypeselect" />
-                <FormControlLabel value="manual" control={<Radio />} label="手動" className="wifitypeselect" />
+                <FormControlLabel value="dhcp" control={<GreenRadio />} label="自動" />
+                <FormControlLabel value="manual" control={<GreenRadio />} label="手動" />
               </RadioGroup>
             </FormControl>
-            <TextField className="outlined-basic" label="名前" variant="outlined" defaultValue="" />
-            <TextField className="outlined-basic" label="IP" variant="outlined" defaultValue="192.168." />
-            <TextField className="outlined-basic" label="サブネットマスク" variant="outlined" defaultValue="255.255.255.0" />
-            <TextField className="outlined-basic" label="ゲートウェイ" variant="outlined" defaultValue="192.168."/>
+            <TextField 
+              className="outlined-basic" 
+              label="名前" 
+              variant="outlined"
+              value={input_name}
+              onChange={handleInputNameChange}
+              defaultValue="" 
+            />
+            <TextField 
+              className="outlined-basic" 
+              label="IP" 
+              variant="outlined" 
+              value={input_ip}
+              onChange={handleInputIPChange}
+              defaultValue="192.168." 
+              disabled={selectedValue === 'dhcp'} 
+            />
+            <TextField 
+              className="outlined-basic" 
+              label="サブネットマスク" 
+              variant="outlined"
+              value={input_subnetmask}
+              onChange={handleInputSubnetmaskChange}
+              defaultValue="255.255.255.0"
+              disabled={selectedValue === 'dhcp'}
+            />
+            <TextField 
+              className="outlined-basic" 
+              label="ゲートウェイ"
+              variant="outlined" 
+              value={input_gateway}
+              onChange={handleInputGatewayChange}
+              defaultValue="192.168." 
+              disabled={selectedValue === 'dhcp'}
+            />
             <div className="ssidbox">
               <Box sx={{ minWidth: 120 }}>
                 <FormControl fullWidth>
@@ -208,46 +310,15 @@ function App() {
                     label="ssid"
                     onChange={handleChange}
                   >
-                    <MenuItem value={10}>test1</MenuItem>
-                    <MenuItem value={20}>test2</MenuItem>
-                    <MenuItem value={30}>test3</MenuItem>
-                    <MenuItem value={40}>test4</MenuItem>
-                    <MenuItem value={50}>test5</MenuItem>
+                    {ssidList.map((ssid) => (
+                      <MenuItem value={ssid}>{ssid}</MenuItem>
+                    ))}
                     
                   </Select>
                 </FormControl>
               </Box>
             </div>
           </Box>
-          {/*<p className="addmenuclosebutton">
-            <ReactiveButton
-              className="settingmenuaddbutton"
-              size="large"
-              buttonState={state}
-              idleText={
-                <span>
-                  追加
-                </span>
-              }
-              loadingText={
-                <span>
-                  追加中...
-                </span>
-              }
-              color="blue"
-              successText={
-                <span>
-                  追加完了 <CheckIcon sx={{ fontSize: 15}} id="checkicon"/>
-                </span>
-              }
-              onClick={() => {
-                setState('loading');
-                setTimeout(() => {
-                  setState('success');
-                }, 2000);
-              }}
-            />
-          </p>*/}
           <div className="addmenubutton" onClick={settingaddbutton}>
             追加
           </div>
@@ -258,5 +329,3 @@ function App() {
 }
 
 export default App;
-
-//追加ボタンをデカくする

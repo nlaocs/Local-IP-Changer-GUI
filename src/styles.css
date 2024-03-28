@@ -75,7 +75,7 @@
 
 #demo-row-radio-buttons-group-label {
   text-align: left;
-  
+  color: #ededed;
 }
 
 
@@ -215,8 +215,8 @@
 .settingmenu {
   justify-content: center;
   align-items: center;
-  margin-top: 150px;
-  margin-bottom: 150px;
+  margin-top: 200px;
+  margin-bottom: 200px;
   position: fixed; 
   inset: 40px; 
   background: #303030; 

@@ -2,10 +2,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{collections::HashMap, fs::OpenOptions, io::{Read, Write}, process::Command};
+use std::{collections::HashMap, fs::{self, File, OpenOptions}, io::{Read, Write}};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::clone::Clone;
+use lib::{wifiscan, WiFi, WifiInterface};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Data {
@@ -106,19 +107,19 @@ fn check_config_file() -> bool {
 }
 
 fn config_create() {
-    let config = Config {
-        devicename: String::from(""),
-        count: 0,
-        confignow: 0,
-        data: HashMap::new(),
-    };
-    let serialized = serde_json::to_string_pretty(&config).unwrap();
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .open("config/config.json")
-        .unwrap();
-    file.write_all(serialized.as_bytes()).unwrap();
+    // ファイルが存在しないときだけ新規作成
+    if !check_config_file() {
+        let config = Config {
+            devicename: String::from(""),
+            count: 0,
+            confignow: 0,
+            data: HashMap::new(),
+        };
+        let serialized = serde_json::to_string_pretty(&config).unwrap();
+        fs::create_dir_all("config").unwrap();
+        let mut file = File::create("config/config.json").unwrap();
+        file.write_all(serialized.as_bytes()).unwrap();
+    }
 }
 
 fn set_count(count: u32) {
@@ -154,30 +155,93 @@ fn get_interface_names() -> Vec<String> {
     interface_names
 }
 
-// -------------------------------------------- ここからはipchengerからの移植
-fn get_device_id() -> Vec<String> {
-    let output = Command::new("powershell")
-        .args(&["-Command", "$result = Get-WmiObject Win32_NetworkAdapter | Select-Object -ExpandProperty NetConnectionID; [Console]::OutputEncoding = [Text.Encoding]::UTF8; $result"])
-        .output()
-        .expect("failed to execute process");
-    if output.status.success() {
-        let result = String::from_utf8_lossy(&output.stdout);
-        result.split('\n').map(|s| s.to_string()).collect()
-    } else {
-        let result = String::from_utf8_lossy(&output.stderr);
-        println!("エラーが発生しました: {}", result);
-        Vec::new()
-    }
+fn get_ssid() -> Vec<String> {
+    let mut ssid_vec: Vec<String> = vec![];
+    let config = get_config();
+    let interfaces_get = config.get_device_name();
+    let interfaces: WiFi = WiFi::new(interfaces_get);
+    let ssid = wifiscan::WiFi::visible_ssid(&interfaces);
+    match ssid {
+        Ok(ssid) => {
+            for i in ssid {
+                ssid_vec.push(i);
+            }
+        }
+        Err(e) => {
+            println!("{:?}", e);
+        }
+    };
+    ssid_vec
 }
+
+fn set_config_device(device: String) {
+    let mut config = get_config();
+
+    config.devicename = device;
+
+    config.write_config();
+}
+
+fn get_config_device() -> String {
+    let config = get_config();
+    config.get_device_name().to_string()
+}
+
+fn add_config_data(name: String, ip: String, mac: String, gateway: String, ssid: String) {
+    let config = get_config();
+    let data_count = config.get_data_count();
+    let order = data_count + 1;
+    let test_data: Data = Data {
+        order,
+        ip,
+        mac,
+        gateway,
+        ssid
+    };
+    set_count(order);
+    test_data.set_data(&name);
+}
+
+// -------------------------------------------- ここからはipchengerからの移植
+
 // ------------------------------------------------------------------------
 // ここからtauriのコマンド
 
 #[tauri::command]
-fn t_get_device_list() -> String {
-    let mut interface_names = get_interface_names();
-    json!(interface_names).to_string()
-    
+fn t_first_run() {
+    config_create();
 }
+
+#[tauri::command]
+fn t_get_device_list() -> String {
+    let interface_names = get_interface_names();
+    json!(interface_names).to_string()
+}
+
+#[tauri::command]
+fn t_get_ssid() -> String {
+    let ssid_vec = get_ssid();
+    json!(ssid_vec).to_string()
+}
+
+#[tauri::command]
+fn t_set_config_device(device: String) {
+    set_config_device(device);
+}
+
+#[tauri::command]
+fn t_get_config_device() -> String {
+    let device = get_config_device();
+    println!("{}", device);
+    device
+}
+
+#[tauri::command]
+fn t_add_config_data(name: String, ip: String, mac: String, gateway: String, ssid: String) {
+    println!("name: {}, ip: {}, mac: {}, gateway: {}, ssid: {}", name, ip, mac, gateway, ssid);
+    add_config_data(name, ip, mac, gateway, ssid);
+}
+
 
 // ------------------------------------------------------------------------
 
@@ -202,8 +266,19 @@ fn testfn2(test: String) {
 
 
 fn main() {
+    config_create();
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![testfn, testfn2, greet, t_get_device_list])
+        .invoke_handler(tauri::generate_handler![
+            testfn,
+            testfn2, 
+            greet, 
+            t_get_device_list, 
+            t_get_ssid, 
+            t_first_run,
+            t_set_config_device,
+            t_get_config_device,
+            t_add_config_data
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -17,6 +17,7 @@ serde_json = "1"
 tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 tauri-utils = "1.5.3"
 default-net = "0.22.0"
+automattermostatus = "0.2.1"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
