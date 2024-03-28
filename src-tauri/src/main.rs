@@ -202,6 +202,12 @@ fn add_config_data(name: String, ip: String, mac: String, gateway: String, ssid:
     test_data.set_data(&name);
 }
 
+fn check_have_data(name: &str) -> bool {
+    let config = get_config();
+    let data_name = config.get_data_name();
+    data_name.iter().any(|n| n == name)
+}
+
 // -------------------------------------------- ここからはipchengerからの移植
 
 // ------------------------------------------------------------------------
@@ -237,11 +243,15 @@ fn t_get_config_device() -> String {
 }
 
 #[tauri::command]
-fn t_add_config_data(name: String, ip: String, mac: String, gateway: String, ssid: String) {
-    println!("name: {}, ip: {}, mac: {}, gateway: {}, ssid: {}", name, ip, mac, gateway, ssid);
-    add_config_data(name, ip, mac, gateway, ssid);
+fn t_add_config_data(name: String, ip: String, subnetmask: String, gateway: String, ssid: String) {
+    println!("name: {}, ip: {}, mac: {}, subnetmask: {}, ssid: {}", name, ip, subnetmask, gateway, ssid);
+    add_config_data(name, ip, subnetmask, gateway, ssid);
 }
 
+#[tauri::command]
+fn t_check_have_data(name: String) -> bool {
+    check_have_data(&name)
+}
 
 // ------------------------------------------------------------------------
 
@@ -277,7 +287,8 @@ fn main() {
             t_first_run,
             t_set_config_device,
             t_get_config_device,
-            t_add_config_data
+            t_add_config_data,
+            t_check_have_data
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

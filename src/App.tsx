@@ -19,6 +19,7 @@ import { Radio, FormControlLabel } from '@mui/material';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormLabel from '@mui/material/FormLabel';
 import { styled } from '@mui/system';
+import { dialog } from "@tauri-apps/api";
 
 
 function clickDisplayAlert() {
@@ -52,6 +53,21 @@ const GreenRadio = styled(Radio)({
   },
 });
 
+function ip_regex(ip: string): boolean {
+  const ip_pattern = new RegExp('^192\\.168\\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])$');
+  return ip_pattern.test(ip);
+}
+
+function subnetmask_regex(subnetmask: string): boolean {
+  const subnetmask_pattern = new RegExp('^(([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$');
+  return subnetmask_pattern.test(subnetmask);
+}
+
+function gateway_regex(gateway: string): boolean {
+  const gateway_pattern = new RegExp('^192\.168(\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){2}$');
+  return gateway_pattern.test(gateway);
+}
+
 function App() {
   const [modalIsOpen, setIsOpen] = useState(false);
   const [settingmodalIsOpen, setSettingIsOpen] = useState(false);
@@ -64,7 +80,38 @@ function App() {
     setWifi(event.target.value as string);
   };
   const settingaddbutton = () => {
-    setIsOpen(false);
+    if (selectedValue === 'manual') {
+      if (input_name === '') {
+        dialog.message('名前が入力されていません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (!ip_regex(input_ip)) {
+        dialog.message('IPアドレスが正しい形式ではありません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (!subnetmask_regex(input_subnetmask)) {
+        dialog.message('サブネットマスクが正しい形式ではありません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (!gateway_regex(input_gateway)) {
+        dialog.message('ゲートウェイが正しい形式ではありません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (ssid === '') {
+        dialog.message('SSIDが選択されていません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      setIsOpen(false);
+      add_config_data(input_name, input_ip, input_subnetmask, input_gateway, ssid);
+      console.log("name: " + input_name + ", ip: " + input_ip + ", subnetmask: " + input_subnetmask + ", gateway: " + input_gateway + ", ssid: " + ssid);
+      reset_input_value();
+    }
+    if (selectedValue === 'dhcp') {
+      setIsOpen(false);
+      add_config_data(input_name, 'dhcp', '', '', ssid);
+      console.log("name: " + input_name + ", ip: dhcp, subnetmask: dhcp, gateway: dhcp, ssid: " + ssid);
+      reset_input_value();
+    }
   };
 
   const [selectedValue, setSelectedValue] = useState('dhcp');
@@ -77,20 +124,29 @@ function App() {
     setInputName(event.target.value);
   };
 
-  const [input_ip, setInputIP] = React.useState('');
+  const [input_ip, setInputIP] = React.useState('192.168.');
   const handleInputIPChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputIP(event.target.value);
   };
 
-  const [input_subnetmask, setInputSubnetmask] = React.useState('');
+  const [input_subnetmask, setInputSubnetmask] = React.useState('255.255.255.0');
   const handleInputSubnetmaskChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputSubnetmask(event.target.value);
   };
 
-  const [input_gateway, setInputGateway] = React.useState('');
+  const [input_gateway, setInputGateway] = React.useState('192.168.');
   const handleInputGatewayChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputGateway(event.target.value);
   };
+
+  const reset_input_value = () => {
+    setSelectedValue('dhcp');
+    setInputName('');
+    setInputIP('192.168.');
+    setInputSubnetmask('255.255.255.0');
+    setInputGateway('192.168.');
+    setSSID('');
+  }
 
   // tauri--------------------------------------------------------
   const [deviceList, setDeviceList] = React.useState<number[]>([]);
@@ -121,6 +177,9 @@ function App() {
     setWifi(deviceName);
   }
 
+  const add_config_data = (name: string, ip: string, subnetmask: string, gateway: string, ssid: string) => {
+    invoke('t_add_config_data', {name: name, ip: ip, subnetmask: subnetmask, gateway: gateway, ssid: ssid});
+  }
 
   // -------------------------------------------------------------
 
@@ -199,7 +258,7 @@ function App() {
 
 
         <Modal isOpen={modalIsOpen} ariaHideApp={false} className="addmenu" closeTimeoutMS={300} overlayClassName="addmenuoverlay">
-          <IconButton aria-label="close" onClick={() => { setIsOpen(false); console.log("aaa"); }}>
+          <IconButton aria-label="close" onClick={() => { setIsOpen(false); console.log("aaa"); reset_input_value()}}>
             <CloseIcon className="closeIcon" fontSize="large" />
           </IconButton>
           
@@ -271,7 +330,6 @@ function App() {
               variant="outlined" 
               value={input_ip}
               onChange={handleInputIPChange}
-              defaultValue="192.168." 
               disabled={selectedValue === 'dhcp'} 
             />
             <TextField 
@@ -280,7 +338,6 @@ function App() {
               variant="outlined"
               value={input_subnetmask}
               onChange={handleInputSubnetmaskChange}
-              defaultValue="255.255.255.0"
               disabled={selectedValue === 'dhcp'}
             />
             <TextField 
@@ -289,7 +346,6 @@ function App() {
               variant="outlined" 
               value={input_gateway}
               onChange={handleInputGatewayChange}
-              defaultValue="192.168." 
               disabled={selectedValue === 'dhcp'}
             />
             <div className="ssidbox">
