@@ -1,8 +1,15 @@
 {
   "devicename": "Wi-Fi",
-  "count": 2,
+  "count": 4,
   "confignow": 0,
   "data": {
+    "てしゅと": {
+      "order": 4,
+      "ip": "dhcp",
+      "mac": "",
+      "gateway": "",
+      "ssid": "xg100n-42b3dd-3"
+    },
     "aaa": {
       "order": 2,
       "ip": "192.168.1.99",
@@ -16,6 +23,13 @@
       "mac": "255.255.255.0",
       "gateway": "192.168.1.1",
       "ssid": "xg100n-42b3dd-1"
+    },
+    "dhcpのテストa": {
+      "order": 3,
+      "ip": "192.168.1.9",
+      "mac": "255.255.255.0",
+      "gateway": "192.168.1.1",
+      "ssid": "elecom2g-198f9d"
     }
   }
 }

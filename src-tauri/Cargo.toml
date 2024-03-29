@@ -1,7 +1,7 @@
 [package]
 name = "local-ip-changer-gui"
 version = "0.0.0"
-description = "A Tauri App"
+description = "Local IP Changer GUI"
 authors = ["you"]
 edition = "2021"
 

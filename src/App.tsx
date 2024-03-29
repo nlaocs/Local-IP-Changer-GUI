@@ -21,21 +21,28 @@ import FormLabel from '@mui/material/FormLabel';
 import { styled } from '@mui/system';
 import { dialog } from "@tauri-apps/api";
 
+interface Data {
+  order: number;
+  ip: string;
+  mac: string;
+  gateway: string;
+  ssid: string;
+}
 
 function clickDisplayAlert() {
   console.log("ボタンがクリックされました！");
 }
 
-async function get_device_list(): Promise<number[]> {
+async function get_device_list(): Promise<string[]> {
   const getDeviceList: string = await invoke("t_get_device_list");
-  const deviceList: number[] = JSON.parse(getDeviceList);
+  const deviceList: string[] = JSON.parse(getDeviceList);
   console.log(deviceList);
   return deviceList;
 }
 
-async function get_ssid(): Promise<number[]> {
+async function get_ssid(): Promise<string[]> {
   const getSSID: string = await invoke("t_get_ssid");
-  const ssid: number[] = JSON.parse(getSSID);
+  const ssid: string[] = JSON.parse(getSSID);
   console.log(ssid);
   return ssid;
 }
@@ -44,6 +51,20 @@ async function get_config_device(): Promise<string> {
   const getConfigDevice: string = await invoke("t_get_config_device");
   console.log(getConfigDevice);
   return getConfigDevice;
+}
+
+async function get_data_list(): Promise<string[]> {
+  const getConfigData: string = await invoke("t_get_data_list");
+  const configData: string[] = JSON.parse(getConfigData);
+  console.log(configData);
+  return configData;
+}
+
+async function get_config_data(name: string): Promise<Data> {
+  const getConfigData: string = await invoke("t_get_config_data", { name });
+  const configData: Data = JSON.parse(getConfigData);
+  console.log(configData);
+  return configData;
 }
 
 const GreenRadio = styled(Radio)({
@@ -68,7 +89,81 @@ function gateway_regex(gateway: string): boolean {
   return gateway_pattern.test(gateway);
 }
 
+function useAsyncData<T>(promise: Promise<T>) {
+  const [data, setData] = useState<T | null>(null);
+
+  useEffect(() => {
+    promise.then(setData);
+  }, [promise]);
+
+  return data;
+}
+
+function DataItem({ name }: { name: string }) {
+  const data = useAsyncData(get_config_data_Data(name));
+  const ipSetting = (data: Data) => {
+    if (data.ip === 'dhcp') {
+      return (
+        <div>自動</div>
+      );
+    } else {
+      return (
+        <div>マニュアル</div>
+      );
+    }
+  }
+
+  if (data === null) {
+    return <div>Loading...</div>;
+  }
+
+  if (data.ip === 'dhcp') {
+
+  }
+
+  return (
+    <div className="box">
+      {name}<hr />
+      <div>{ipSetting(data)}</div>
+      <div className="wifiname">{data.ssid}</div>
+      <div className="icon">
+        <IconButton aria-label="delete" onClick={() => push_remove_button(name)}>
+          <DeleteIcon className="deleteIcon" fontSize="large" />
+        </IconButton>
+        <IconButton aria-label="edit" onClick={clickDisplayAlert}>
+          <EditIcon className="editIcon" fontSize="large" />
+        </IconButton>
+        <IconButton aria-label="play" onClick={clickDisplayAlert}>
+          <PlayArrowIcon className="playIcon" fontSize="large" />
+        </IconButton>
+      </div>
+    </div>
+  );
+}
+
+async function push_remove_button(name: string) {
+  const result = await dialog.ask('本当に' + name + 'を削除しますか？', { title: "Local IP Changer GUI", type: "info"});
+  if (result) { // yes
+    invoke('t_remove_config_data', {name: name});
+  } else { // no
+    
+  }
+}
+
+const get_config_data_Data = async (name: string) => {
+  const configData: Data = await get_config_data(name);
+  console.log(configData);
+  return configData;
+}
+
+
+
+
 function App() {
+  useEffect(() => {
+    get_config_data_string();
+  }, []);
+
   const [modalIsOpen, setIsOpen] = useState(false);
   const [settingmodalIsOpen, setSettingIsOpen] = useState(false);
   const [ssid, setSSID] = React.useState('');
@@ -83,6 +178,10 @@ function App() {
     if (selectedValue === 'manual') {
       if (input_name === '') {
         dialog.message('名前が入力されていません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (input_name.length >= 15) {
+        dialog.message('15文字以内にしてください', { title: "Local IP Changer GUI", type: "error"});
         return;
       }
       if (!ip_regex(input_ip)) {
@@ -101,17 +200,33 @@ function App() {
         dialog.message('SSIDが選択されていません', { title: "Local IP Changer GUI", type: "error"});
         return;
       }
+      if (check_have_data(input_name)) {
+        dialog.message('同じ名前の設定が既に存在します', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
       setIsOpen(false);
       add_config_data(input_name, input_ip, input_subnetmask, input_gateway, ssid);
       console.log("name: " + input_name + ", ip: " + input_ip + ", subnetmask: " + input_subnetmask + ", gateway: " + input_gateway + ", ssid: " + ssid);
-      reset_input_value();
     }
     if (selectedValue === 'dhcp') {
+      if (input_name === '') {
+        dialog.message('名前が入力されていません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (ssid === '') {
+        dialog.message('SSIDが選択されていません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (check_have_data(input_name)) {
+        dialog.message('同じ名前の設定が既に存在します', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
       setIsOpen(false);
       add_config_data(input_name, 'dhcp', '', '', ssid);
-      console.log("name: " + input_name + ", ip: dhcp, subnetmask: dhcp, gateway: dhcp, ssid: " + ssid);
-      reset_input_value();
+      console.log("name: " + input_name + ", ip: dhcp, subnetmask: , gateway: , ssid: " + ssid);
     }
+    reset_input_value();
+    get_config_data_string();
   };
 
   const [selectedValue, setSelectedValue] = useState('dhcp');
@@ -148,17 +263,24 @@ function App() {
     setSSID('');
   }
 
+  const check_have_data = (name: string): boolean => {
+    return configData.some((configName) => configName === name);
+  }
+
+  // {configData.map((name) => <DataItem key={name} name={name} />)}
+
+
   // tauri--------------------------------------------------------
-  const [deviceList, setDeviceList] = React.useState<number[]>([]);
+  const [deviceList, setDeviceList] = React.useState<string[]>([]);
   const push_settings_button = () => {
     setSettingIsOpen(true);
     get_device_list().then((deviceList) => {
       setDeviceList(deviceList);
-      get_config_device_string();
     });
+    get_config_device_string();
   }
 
-  const [ssidList, setSSIDList] = React.useState<number[]>([]);
+  const [ssidList, setSSIDList] = React.useState<string[]>([]);
   const push_add_button = () => {
     setIsOpen(true);
     get_ssid().then((ssidList) => {
@@ -181,35 +303,27 @@ function App() {
     invoke('t_add_config_data', {name: name, ip: ip, subnetmask: subnetmask, gateway: gateway, ssid: ssid});
   }
 
+
+  const [configData, setConfigData] = React.useState<string[]>([]);
+  const get_config_data_string = async () => {
+    const configData: string[] = await get_data_list();
+    console.log(configData);
+    setConfigData(configData);
+  }
+
+
   // -------------------------------------------------------------
 
   document.addEventListener('contextmenu', event => event.preventDefault());
-  useEffect(() => {
-    
-  }, []);
   return (
     <div className="App">
       <div className="Appname">
         <h1>Local IP Changer GUI</h1>
       </div>
       <div className="container">
-        {Array(10).fill(0).map((_, index) => (
-          <div key={index} className="box">
-            ここにブロック状の設定が来る予定<hr />
-            <div>自動設定</div><div className="wifiname">(wifi-test{index})</div>
-            <div className="icon">
-              <IconButton aria-label="delete" onClick={clickDisplayAlert}>
-                <DeleteIcon className="deleteIcon" fontSize="large" />
-              </IconButton>
-              <IconButton aria-label="edit" onClick={clickDisplayAlert}>
-                <EditIcon className="editIcon" fontSize="large" />
-              </IconButton>
-              <IconButton aria-label="play" onClick={clickDisplayAlert}>
-                <PlayArrowIcon className="playIcon" fontSize="large" />
-              </IconButton>
-            </div>
-          </div>
-        ))}
+        
+      {configData.map((name) => <DataItem key={name} name={name} />)}
+
         <div className="settings-container">
           <div className="settingbutton" onClick={push_settings_button}>
               <SettingsIcon id="settingsicon"/>
@@ -320,6 +434,7 @@ function App() {
               className="outlined-basic" 
               label="名前" 
               variant="outlined"
+              inputProps={{ maxLength: 15 }}
               value={input_name}
               onChange={handleInputNameChange}
               defaultValue="" 

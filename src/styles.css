@@ -293,6 +293,9 @@
 
 .wifiname {
   color: #b7b7b7;
+  font-size: 17px;
+  /*フォントを下に配置*/
+  padding: 3px 0px 0px 0px;
 
 }
 

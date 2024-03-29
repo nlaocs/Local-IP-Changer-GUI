@@ -18,18 +18,6 @@ struct Data {
 }
 
 impl Data {
-    fn get_ip(&self) -> &str {
-        &self.ip
-    }
-    fn get_mac(&self) -> &str {
-        &self.mac
-    }
-    fn get_gateway(&self) -> &str {
-        &self.gateway
-    }
-    fn get_ssid(&self) -> &str {
-        &self.ssid
-    }
     fn set_data(self, name: &str) {
         let mut config = get_config();
 
@@ -51,9 +39,6 @@ struct Config {
 impl Config {
     fn get_device_name(&self) -> &String {
         &self.devicename
-    }
-    fn get_config_count(&self) -> u32 {
-        self.count
     }
     fn get_config_now(&self) -> u32 {
         self.confignow
@@ -208,16 +193,20 @@ fn check_have_data(name: &str) -> bool {
     data_name.iter().any(|n| n == name)
 }
 
+fn get_config_data_list() -> Vec<String> {
+    let config = get_config();
+    config.get_data_name()
+}
+
+fn get_config_data(name: &str) -> Data {
+    let config = get_config();
+    config.get_config_data(name)
+}
+
 // -------------------------------------------- ここからはipchengerからの移植
 
 // ------------------------------------------------------------------------
 // ここからtauriのコマンド
-
-#[tauri::command]
-fn t_first_run() {
-    config_create();
-}
-
 #[tauri::command]
 fn t_get_device_list() -> String {
     let interface_names = get_interface_names();
@@ -253,6 +242,23 @@ fn t_check_have_data(name: String) -> bool {
     check_have_data(&name)
 }
 
+#[tauri::command]
+fn t_get_data_list() -> String {
+    let data_list = get_config_data_list();
+    json!(data_list).to_string()
+}
+
+#[tauri::command]
+fn t_get_config_data(name: String) -> String {
+    let data = get_config_data(&name);
+    json!(data).to_string()
+}
+
+#[tauri::command]
+fn t_remove_config_data(name: String) {
+    config_remove_data(&name);
+}
+
 // ------------------------------------------------------------------------
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -284,11 +290,13 @@ fn main() {
             greet, 
             t_get_device_list, 
             t_get_ssid, 
-            t_first_run,
             t_set_config_device,
             t_get_config_device,
             t_add_config_data,
-            t_check_have_data
+            t_check_have_data,
+            t_get_data_list,
+            t_get_config_data,
+            t_remove_config_data
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
