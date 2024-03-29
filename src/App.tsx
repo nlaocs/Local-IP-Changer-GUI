@@ -117,7 +117,20 @@ function App() {
   }, []);
 
   function DataItem({ name }: { name: string }) {
-    const data = useAsyncData(get_config_data_Data(name));
+    const [data, setData] = useState<Data | null>(null);
+  
+    useEffect(() => {
+      const fetchData = async () => {
+        const result = await get_config_data_Data(name);
+        setData(result);
+      };
+  
+      fetchData();
+    }, [name]);
+    if (data === null) {
+      return null;
+    }
+    
     const ipSetting = (data: Data) => {
       if (data.ip === 'dhcp') {
         return (
@@ -143,7 +156,7 @@ function App() {
           <IconButton aria-label="delete" onClick={() => push_remove_button(name)}>
             <DeleteIcon className="deleteIcon" fontSize="large" />
           </IconButton>
-          <IconButton aria-label="edit" onClick={() => push_edit_button(name)}>
+          <IconButton aria-label="edit" onClick={() => {setEditIsOpen(true); push_edit_button(name);}}>
             <EditIcon className="editIcon" fontSize="large" />
           </IconButton>
           <IconButton aria-label="play" onClick={clickDisplayAlert}>
@@ -231,6 +244,51 @@ function App() {
     get_config_data_string();
   };
 
+  const settingeditbutton = () => {
+    if (edittingSelectedValue === 'manual') {
+      if (edittingName === '') {
+        dialog.message('名前が入力されていません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (edittingName.length >= 15) {
+        dialog.message('15文字以内にしてください', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (!ip_regex(edittingIP)) {
+        dialog.message('IPアドレスが正しい形式ではありません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (!subnetmask_regex(edittingSubnetmask)) {
+        dialog.message('サブネットマスクが正しい形式ではありません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (!gateway_regex(edittingGateway)) {
+        dialog.message('ゲートウェイが正しい形式ではありません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (edittingSSID === '') {
+        dialog.message('SSIDが選択されていません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      setEditIsOpen(false);
+      edit_config_data(edittingName, edittingIP, edittingSubnetmask, edittingGateway, edittingSSID);
+      console.log("name: " + edittingName + ", ip: " + edittingIP + ", subnetmask: " + edittingSubnetmask + ", gateway: " + edittingGateway + ", ssid: " + edittingSSID);
+    }
+    if (edittingSelectedValue === 'dhcp') {
+      if (edittingName === '') {
+        dialog.message('名前が入力されていません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      if (edittingSSID === '') {
+        dialog.message('SSIDが選択されていません', { title: "Local IP Changer GUI", type: "error"});
+        return;
+      }
+      setEditIsOpen(false);
+      edit_config_data(edittingName, 'dhcp', '', '', edittingSSID);
+      console.log("name: " + edittingName + ", ip: dhcp, subnetmask: , gateway: , ssid: " + edittingSSID);
+    }
+  }
+
   const [selectedValue, setSelectedValue] = useState('dhcp');
   const handleChangeadd = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedValue((event.target as HTMLInputElement).value);
@@ -255,7 +313,7 @@ function App() {
   const handleInputGatewayChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputGateway(event.target.value);
   };
-  
+
   const [edittingSelectedValue, setEdittingSelectedValue] = useState('');
   const handleChangeEdittingSelectValue = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEdittingSelectedValue((event.target as HTMLInputElement).value);
@@ -296,6 +354,15 @@ function App() {
     setSSID('');
   }
 
+  const reset_editting_value = () => {
+    setEdittingSelectedValue('');
+    setEdittingName('');
+    setEdittingIP('');
+    setEdittingSubnetmask('');
+    setEdittingGateway('');
+    setEdittingSSID('');
+  }
+
   const check_have_data = (name: string): boolean => {
     return configData.some((configName) => configName === name);
   }
@@ -321,27 +388,36 @@ function App() {
     });
   }
 
-  const push_edit_button = (name: string) => {
-    const data = useAsyncData(get_config_data_Data(name));
-    if (data === null) {
-      return;
-    }
+  const push_edit_button = async (name: string) => {
+    get_ssid().then((ssidList) => {
+      setSSIDList(ssidList);
+    });
+    console.log("てすとおおおおお1")
     setEdittingName(name);
-    setEdittingSSID(data.ssid);
-    if (data.ip === 'dhcp') {
-      setEdittingSelectedValue('dhcp');
-      setEdittingIP('');
-      setEdittingSubnetmask('');
-      setEdittingGateway('');
+    console.log("asdasdasddebug: " + name);
+    try {
+      const data = await get_config_data_Data(name); // useAsyncDataを直接呼び出すのではなく、関数を直接呼び出します。
+      if (data === null) {
+        return console.log("data is null");
+      }
+      setEdittingSSID(data.ssid);
+      if (data.ip === 'dhcp') {
+        setEdittingSelectedValue('dhcp');
+        setEdittingIP('');
+        setEdittingSubnetmask('');
+        setEdittingGateway('');
+      }
+      else {
+        setEdittingSelectedValue('manual');
+        setEdittingIP(data.ip);
+        setEdittingSubnetmask(data.gateway);
+        setEdittingGateway(data.gateway);
+        console.log("debug: " + data.ip + ", " + data.gateway + ", " + data.ssid);
+      }
+    } catch (error) {
+      console.error("Error fetching data: ", error);
     }
-    else {
-      setEdittingSelectedValue('manual');
-      setEdittingIP(data.ip);
-      setEdittingSubnetmask(data.mac);
-      setEdittingGateway(data.gateway);
-    }
-    setEditIsOpen(true);
-    
+    console.log("てすとおおおおお2")
   }
 
   const wifisettingbutton = (device: string) => {
@@ -377,144 +453,141 @@ function App() {
         <h1>Local IP Changer GUI</h1>
       </div>
       <div className="container">
-        
-      {configData.map((name) => <DataItem key={name} name={name} />)}
 
+      {configData.map((name) => <DataItem key={name} name={name} />)}
+      
         <div className="settings-container">
           <div className="settingbutton" onClick={push_settings_button}>
-              <SettingsIcon id="settingsicon"/>
+            <SettingsIcon id="settingsicon"/>
           </div>
           <div className="addbox" onClick={push_add_button}>
-              <AddIcon id="addicon"/>
+            <AddIcon id="addicon"/>
           </div>
         </div>
 
         <Modal isOpen={editmodalIsOpen} ariaHideApp={false} className="addmenu" closeTimeoutMS={300} overlayClassName="addmenuoverlay">
-        <IconButton aria-label="close" onClick={() => { setEditIsOpen(false); console.log("aaa"); reset_input_value()}}>
-            <CloseIcon className="closeIcon" fontSize="large" />
-          </IconButton>
-          
-          <h2 id="modalh2">設定編集</h2>
-          <Box
-            component="form"
-            className="settings-input-field"
-            sx={{
-              '& > :not(style)': { m: 1, width: '25ch' },
-              '& .MuiInputBase-input': {
-                color: '#FFFFFF',    // 入力文字の色
-              },
-              '& label': {
-                color: '#d6d6d6', // 通常時のラベル色 
-              },
-              '& .MuiInput-underline:before': {
-                borderBottomColor: '#CCCCCC', // 通常時のボーダー色
-              },
-              '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
-                borderBottomColor: '#DDDDDD',  // ホバー時のボーダー色
-              },
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  borderColor: '#CCCCCC',    // 通常時のボーダー色(アウトライン)
+          <IconButton aria-label="close" onClick={() => { setEditIsOpen(false); reset_editting_value(); console.log("aaa");}}>
+              <CloseIcon className="closeIcon" fontSize="large" />
+            </IconButton>
+            
+            <h2 id="modalh2">設定編集</h2>
+            <Box
+              component="form"
+              className="settings-input-field"
+              sx={{
+                '& > :not(style)': { m: 1, width: '25ch' },
+                '& .MuiInputBase-input': {
+                  color: '#FFFFFF',    // 入力文字の色
                 },
-                '&:hover fieldset': {
-                  borderColor: '#DDDDDD',    // ホバー時のボーダー色(アウトライン)
+                '& label': {
+                  color: '#d6d6d6', // 通常時のラベル色 
                 },
-              },
-              "& .MuiInputBase-input.Mui-disabled": {
-                WebkitTextFillColor: "#858585",
-                backgroundColor: "#2b2b2b",
-                borderColor: "#858585",
-                '& fieldset': {
-                  borderColor: '#CCCCCC',    // 通常時のボーダー色(アウトライン)
+                '& .MuiInput-underline:before': {
+                  borderBottomColor: '#CCCCCC', // 通常時のボーダー色
                 },
-                '&:hover fieldset': {
-                  borderColor: '#DDDDDD',    // ホバー時のボーダー色(アウトライン)
+                '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
+                  borderBottomColor: '#DDDDDD',  // ホバー時のボーダー色
                 },
-              },
-            }}
-            noValidate
-            autoComplete="off"
-          >
-            <FormControl >
-              <FormLabel id="demo-row-radio-buttons-group-label">タイプ</FormLabel>
-              <RadioGroup
-                row
-                aria-labelledby="demo-row-radio-buttons-group-label"
-                name="row-radio-buttons-group"
-                defaultValue={edittingSelectedValue}
-                onChange={handleChangeEdittingSelectValue}
-              >
-                <FormControlLabel value="dhcp" control={<GreenRadio />} label="自動" />
-                <FormControlLabel value="manual" control={<GreenRadio />} label="手動" />
-              </RadioGroup>
-            </FormControl>
-            <TextField 
-              className="outlined-basic" 
-              label="名前" 
-              variant="outlined"
-              inputProps={{ maxLength: 15 }}
-              value={edittingName}
-              onChange={handleEdittingNameChange}
-              defaultValue={edittingName}
-            />
-            <TextField 
-              className="outlined-basic" 
-              label="IP" 
-              variant="outlined" 
-              value={edittingIP}
-              onChange={handleEdittingIPChange}
-              disabled={edittingSelectedValue === 'dhcp'}
-              defaultValue={edittingIP}
-            />
-            <TextField 
-              className="outlined-basic" 
-              label="サブネットマスク" 
-              variant="outlined"
-              value={edittingSubnetmask}
-              onChange={handleEdittingSubnetmaskChange}
-              disabled={edittingSelectedValue === 'dhcp'}
-              defaultValue={edittingSubnetmask}
-            />
-            <TextField 
-              className="outlined-basic" 
-              label="ゲートウェイ"
-              variant="outlined" 
-              value={edittingGateway}
-              onChange={handleEdittingGatewayChange}
-              disabled={edittingSelectedValue === 'dhcp'}
-              defaultValue={edittingGateway}
-            />
-            <div className="ssidbox">
-              <Box sx={{ minWidth: 120 }}>
-                <FormControl fullWidth>
-                  <InputLabel id="ssidlabel">SSID</InputLabel>
-                  <Select
-                    MenuProps={{
-                      sx: {
-                        "&& .Mui-selected": {
-                          backgroundColor: "#83aaff"
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#CCCCCC',    // 通常時のボーダー色(アウトライン)
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#DDDDDD',    // ホバー時のボーダー色(アウトライン)
+                  },
+                },
+                "& .MuiInputBase-input.Mui-disabled": {
+                  WebkitTextFillColor: "#858585",
+                  backgroundColor: "#2b2b2b",
+                  borderColor: "#858585",
+                  '& fieldset': {
+                    borderColor: '#CCCCCC',    // 通常時のボーダー色(アウトライン)
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#DDDDDD',    // ホバー時のボーダー色(アウトライン)
+                  },
+                },
+              }}
+              noValidate
+              autoComplete="off"
+            >
+              <FormControl >
+                <FormLabel id="demo-row-radio-buttons-group-label">タイプ</FormLabel>
+                <RadioGroup
+                  row
+                  aria-labelledby="demo-row-radio-buttons-group-label"
+                  name="row-radio-buttons-group"
+                  defaultValue={edittingSelectedValue}
+                  onChange={handleChangeEdittingSelectValue}
+                  value={edittingSelectedValue}
+                >
+                  <FormControlLabel value="dhcp" control={<GreenRadio />} label="自動" />
+                  <FormControlLabel value="manual" control={<GreenRadio />} label="手動" />
+                </RadioGroup>
+              </FormControl>
+              <TextField 
+                className="outlined-basic" 
+                label="名前" 
+                variant="outlined"
+                inputProps={{ maxLength: 15 }}
+                value={edittingName}
+                onChange={handleEdittingNameChange}
+                disabled={true}
+              />
+              <TextField 
+                className="outlined-basic" 
+                label="IP" 
+                variant="outlined" 
+                value={edittingIP}
+                onChange={handleEdittingIPChange}
+                disabled={edittingSelectedValue === 'dhcp'}
+                />
+              <TextField 
+                className="outlined-basic" 
+                label="サブネットマスク" 
+                variant="outlined"
+                value={edittingSubnetmask}
+                onChange={handleEdittingSubnetmaskChange}
+                disabled={edittingSelectedValue === 'dhcp'}
+              />
+              <TextField 
+                className="outlined-basic" 
+                label="ゲートウェイ"
+                variant="outlined" 
+                value={edittingGateway}
+                onChange={handleEdittingGatewayChange}
+                disabled={edittingSelectedValue === 'dhcp'}
+              />
+              <div className="ssidbox">
+                <Box sx={{ minWidth: 120 }}>
+                  <FormControl fullWidth>
+                    <InputLabel id="ssidlabel">SSID</InputLabel>
+                    <Select
+                      MenuProps={{
+                        sx: {
+                          "&& .Mui-selected": {
+                            backgroundColor: "#83aaff"
+                          }
                         }
-                      }
-                    }}
-                    labelId="ssidlabel"
-                    id="ssidselect"
-                    value={edittingSSID}
-                    label="ssid"
-                    onChange={handleChange}
-                    defaultValue={edittingSSID}
-                  >
-                    {ssidList.map((ssid) => (
-                      <MenuItem value={ssid}>{ssid}</MenuItem>
-                    ))}
-                    
-                  </Select>
-                </FormControl>
-              </Box>
+                      }}
+                      labelId="ssidlabel"
+                      id="ssidselect"
+                      value={edittingSSID}
+                      label="ssid"
+                      onChange={handleEdittingSSIDChange}
+                    >
+                      {ssidList.map((ssid) => (
+                        <MenuItem value={ssid}>{ssid}</MenuItem>
+                      ))}
+                      <MenuItem value={edittingSSID}>{edittingSSID}</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+              </div>
+            </Box>
+            <div className="addmenubutton" onClick={settingeditbutton}>
+              適用
             </div>
-          </Box>
-          <div className="addmenubutton" onClick={settingaddbutton}>
-            適応
-          </div>
         </Modal>
 
         <Modal isOpen={settingmodalIsOpen} ariaHideApp={false} className="settingmenu" closeTimeoutMS={300} overlayClassName="settingmenuoverlay">
