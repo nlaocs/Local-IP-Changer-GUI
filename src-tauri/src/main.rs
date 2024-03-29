@@ -256,6 +256,7 @@ fn t_get_config_data(name: String) -> String {
 
 #[tauri::command]
 fn t_remove_config_data(name: String) {
+    
     config_remove_data(&name);
 }
 
