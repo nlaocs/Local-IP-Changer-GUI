@@ -93,6 +93,8 @@ function App() {
   useEffect(() => {
     get_config_data_string();
   }, []);
+  const [ifnowsetting, setIfNowSetting] = useState<JSX.Element | null>(null);
+  const [nowSetting, setNowSetting] = useState(3);
 
   function DataItem({ name }: { name: string }) {
     const [data, setData] = useState<Data | null>(null);
@@ -120,11 +122,11 @@ function App() {
         );
       }
     }
-  
-    if (data === null) {
-      return;
-    }
-  
+    
+    //if (data.order === nowSetting) {
+    //  setIfNowSetting(<div className="nowsetting">現在の設定</div>);
+    //}
+
     return (
       <div className="box">
         {name}<hr />
@@ -137,7 +139,7 @@ function App() {
           <IconButton aria-label="edit" onClick={() => {setEditIsOpen(true); push_edit_button(name);}}>
             <EditIcon className="editIcon" fontSize="large" />
           </IconButton>
-          <IconButton aria-label="play" onClick={clickDisplayAlert}>
+          <IconButton aria-label="play" onClick={() => push_play_button(name)}>
             <PlayArrowIcon className="playIcon" fontSize="large" />
           </IconButton>
         </div>
@@ -154,6 +156,10 @@ function App() {
     } else { // no
       
     }
+  }
+
+  async function push_play_button(name: string) {
+    invoke('t_run_config_data', {name: name});
   }
 
   const [modalIsOpen, setIsOpen] = useState(false);
@@ -434,6 +440,11 @@ function App() {
     };
     sortConfigData();
   }, [configData]);
+
+  const get_now_config = async () => {
+    const nowConfig: number = await invoke("t_get_now_config");
+    return nowConfig;
+  }
   // -------------------------------------------------------------
 
   document.addEventListener('contextmenu', event => event.preventDefault());

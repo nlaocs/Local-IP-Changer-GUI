@@ -2,7 +2,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{collections::HashMap, fs::{self, File, OpenOptions}, io::{Read, Write}};
+use std::{collections::HashMap, fs::{self, File, OpenOptions}, io::{Read, Write}, process::Command};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::clone::Clone;
@@ -218,6 +218,57 @@ fn get_config_data(name: &str) -> Data {
 
 // -------------------------------------------- ここからはipchengerからの移植
 
+fn execute_command(iptype: String, devicename: String, ip: String, mac: String, gateway: String) {
+    let dhcp = check_dhcp();
+    if dhcp == "Enabled" && &iptype == "dhcp" {
+        println!("IP設定: すでに設定されています。");
+        return;
+    } if dhcp == "Disabled" && &iptype == "static" {
+        println!("IP設定: すでに設定されています。");
+        return;
+    }
+    let netcommand = match iptype.as_str() {
+        "static" => format!("netsh int ip set addr name=\"{}\" static {} {} {}", devicename, ip, mac, gateway),
+        "dhcp" => format!("netsh int ip set addr name=\"{}\" dhcp", devicename),
+        _ => panic!("不明なiptype: {}", iptype),
+    };
+    let output = Command::new("cmd")
+        .args(&["/C", &netcommand])
+        .output()
+        .expect("IP設定: 実行されませんでした: 不明なエラー");
+    if output.status.success() {
+        println!("IP設定: 設定が完了しました。");
+    } else {
+        let result = String::from_utf8_lossy(&output.stderr);
+        eprintln!("IP設定: 実行されませんでした: {}", result);
+    }
+}
+
+fn connect_wifi(ssid: String) {
+    let now_connecting_wifi = get_connecting_wifi_name();
+    if now_connecting_wifi == ssid {
+        println!("WiFi設定: すでに接続されています。");
+    } else {
+        let netcommand = format!("netsh wlan connect name=\"{}\"", ssid);
+        let output = Command::new("cmd")
+            .args(&["/C", &netcommand])
+            .output();
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    println!("WiFi設定: 設定が完了しました。");
+                } else {
+                    let result = String::from_utf8_lossy(&output.stderr);
+                    eprintln!("実行されませんでした: {}", result);
+                }
+            },
+            Err(e) => {
+                eprintln!("コマンドの実行中にエラーが発生しました: {}", e);
+            }
+        }
+    }
+}
+
 // ------------------------------------------------------------------------
 // ここからtauriのコマンド
 #[tauri::command]
@@ -277,6 +328,18 @@ fn t_edit_config_data(name: String, ip: String, mac: String, gateway: String, ss
     edit_config_data(name, ip, mac, gateway, ssid);
 }
 
+#[tauri::command]
+fn t_get_now_config() -> i64 {
+    let config = get_config();
+    let now = config.get_config_now();
+    json!(now).as_i64().unwrap()
+}
+
+#[tauri::command]
+fn t_run_config_data(name: &str) {
+
+}
+
 // ------------------------------------------------------------------------
 
 #[tauri::command]
@@ -299,7 +362,8 @@ fn main() {
             t_get_data_list,
             t_get_config_data,
             t_remove_config_data,
-            t_edit_config_data
+            t_edit_config_data,
+            t_get_now_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
