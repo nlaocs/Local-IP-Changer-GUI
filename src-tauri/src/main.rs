@@ -52,7 +52,7 @@ impl Config {
         object.keys().map(|key| key.to_string()).collect()
     }
     fn get_data_count(&self) -> u32 {
-        self.data.len() as u32
+        self.count
     }
     fn write_config(&self) {
         let serialized = serde_json::to_string_pretty(&self).unwrap();
@@ -122,7 +122,6 @@ fn config_remove_data(name: &str) {
     config.data.remove(name);
 
     config.write_config();
-    set_count(config.get_data_count());
 }
 
 fn get_interface_names() -> Vec<String> {
@@ -188,7 +187,7 @@ fn add_config_data(name: String, ip: String, mac: String, gateway: String, ssid:
 }
 
 fn edit_config_data(name: String, ip: String, mac: String, gateway: String, ssid: String) {
-    let mut config = get_config();
+    let config = get_config();
     let data = config.get_config_data(&name);
     let order = data.order;
     let test_data: Data = Data {

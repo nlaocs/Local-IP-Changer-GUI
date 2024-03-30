@@ -36,34 +36,29 @@ function clickDisplayAlert() {
 async function get_device_list(): Promise<string[]> {
   const getDeviceList: string = await invoke("t_get_device_list");
   const deviceList: string[] = JSON.parse(getDeviceList);
-  console.log(deviceList);
   return deviceList;
 }
 
 async function get_ssid(): Promise<string[]> {
   const getSSID: string = await invoke("t_get_ssid");
   const ssid: string[] = JSON.parse(getSSID);
-  console.log(ssid);
   return ssid;
 }
 
 async function get_config_device(): Promise<string> {
   const getConfigDevice: string = await invoke("t_get_config_device");
-  console.log(getConfigDevice);
   return getConfigDevice;
 }
 
 async function get_data_list(): Promise<string[]> {
   const getConfigData: string = await invoke("t_get_data_list");
   const configData: string[] = JSON.parse(getConfigData);
-  console.log(configData);
   return configData;
 }
 
 async function get_config_data(name: string): Promise<Data> {
   const getConfigData: string = await invoke("t_get_config_data", { name });
   const configData: Data = JSON.parse(getConfigData);
-  console.log(configData);
   return configData;
 }
 
@@ -91,7 +86,6 @@ function gateway_regex(gateway: string): boolean {
 
 const get_config_data_Data = async (name: string) => {
   const configData: Data = await get_config_data(name);
-  console.log(configData);
   return configData;
 }
 
@@ -205,7 +199,6 @@ function App() {
       }
       setIsOpen(false);
       add_config_data(input_name, input_ip, input_subnetmask, input_gateway, ssid);
-      console.log("name: " + input_name + ", ip: " + input_ip + ", subnetmask: " + input_subnetmask + ", gateway: " + input_gateway + ", ssid: " + ssid);
     }
     if (selectedValue === 'dhcp') {
       if (input_name === '') {
@@ -222,7 +215,6 @@ function App() {
       }
       setIsOpen(false);
       add_config_data(input_name, 'dhcp', '', '', ssid);
-      console.log("name: " + input_name + ", ip: dhcp, subnetmask: , gateway: , ssid: " + ssid);
     }
     reset_input_value();
     get_config_data_string();
@@ -256,7 +248,6 @@ function App() {
       }
       setEditIsOpen(false);
       edit_config_data(edittingName, edittingIP, edittingSubnetmask, edittingGateway, edittingSSID);
-      console.log("name: " + edittingName + ", ip: " + edittingIP + ", subnetmask: " + edittingSubnetmask + ", gateway: " + edittingGateway + ", ssid: " + edittingSSID);
     }
     if (edittingSelectedValue === 'dhcp') {
       if (edittingName === '') {
@@ -269,7 +260,6 @@ function App() {
       }
       setEditIsOpen(false);
       edit_config_data(edittingName, 'dhcp', '', '', edittingSSID);
-      console.log("name: " + edittingName + ", ip: dhcp, subnetmask: , gateway: , ssid: " + edittingSSID);
     }
   }
 
@@ -377,11 +367,9 @@ function App() {
     get_ssid().then((ssidList) => {
       setSSIDList(ssidList);
     });
-    console.log("てすとおおおおお1")
     setEdittingName(name);
-    console.log("asdasdasddebug: " + name);
     try {
-      const data = await get_config_data_Data(name); // useAsyncDataを直接呼び出すのではなく、関数を直接呼び出します。
+      const data = await get_config_data_Data(name);
       if (data === null) {
         return console.log("data is null");
       }
@@ -397,17 +385,14 @@ function App() {
         setEdittingIP(data.ip);
         setEdittingSubnetmask(data.mac);
         setEdittingGateway(data.gateway);
-        console.log("debug: " + data.ip + ", " + data.gateway + ", " + data.ssid);
       }
     } catch (error) {
       console.error("Error fetching data: ", error);
     }
-    console.log("てすとおおおおお2")
   }
 
   const wifisettingbutton = (device: string) => {
     setSettingIsOpen(false);
-    console.log(device);
     invoke('t_set_config_device', {device: device});
   };
   
@@ -425,7 +410,6 @@ function App() {
   const [configData, setConfigData] = React.useState<string[]>([]);
   const get_config_data_string = async () => {
     const configData: string[] = await get_data_list();
-    console.log(configData);
     setConfigData(configData);
   }
 
@@ -435,9 +419,21 @@ function App() {
   }
   
 
-  
+  async function nameToOrder(name: string): Promise<number> {
+    const configData = await get_config_data(name);
+    return configData.order;
+  }
 
+  const [sortedConfigData, setSortedConfigData] = useState<string[]>([]);
   
+  useEffect(() => {
+    const sortConfigData = async () => {
+      const orders = await Promise.all(configData.map(name => nameToOrder(name)));
+      const sorted = [...configData].sort((a, b) => orders[configData.indexOf(a)] - orders[configData.indexOf(b)]);
+      setSortedConfigData(sorted);
+    };
+    sortConfigData();
+  }, [configData]);
   // -------------------------------------------------------------
 
   document.addEventListener('contextmenu', event => event.preventDefault());
@@ -448,7 +444,9 @@ function App() {
       </div>
       <div className="container">
 
-      {configData}
+      {
+        sortedConfigData.map((name) => <DataItem key={name} name={name} />)
+      }
       
         <div className="settings-container">
           <div className="settingbutton" onClick={push_settings_button}>
@@ -460,7 +458,7 @@ function App() {
         </div>
 
         <Modal isOpen={editmodalIsOpen} ariaHideApp={false} className="addmenu" closeTimeoutMS={300} overlayClassName="addmenuoverlay">
-          <IconButton aria-label="close" onClick={() => { setEditIsOpen(false); reset_editting_value(); console.log("aaa");}}>
+          <IconButton aria-label="close" onClick={() => { setEditIsOpen(false); reset_editting_value();}}>
               <CloseIcon className="closeIcon" fontSize="large" />
             </IconButton>
             
@@ -585,7 +583,7 @@ function App() {
         </Modal>
 
         <Modal isOpen={settingmodalIsOpen} ariaHideApp={false} className="settingmenu" closeTimeoutMS={300} overlayClassName="settingmenuoverlay">
-          <IconButton aria-label="close" onClick={() => { setSettingIsOpen(false); console.log("aaa"); }}>
+          <IconButton aria-label="close" onClick={() => { setSettingIsOpen(false);}}>
             <CloseIcon className="closeIcon" fontSize="large" />
           </IconButton>
           <h2 id="modalh2">環境設定</h2>
@@ -623,7 +621,7 @@ function App() {
         </Modal>
 
         <Modal isOpen={modalIsOpen} ariaHideApp={false} className="addmenu" closeTimeoutMS={300} overlayClassName="addmenuoverlay">
-          <IconButton aria-label="close" onClick={() => { setIsOpen(false); console.log("aaa"); reset_input_value()}}>
+          <IconButton aria-label="close" onClick={() => { setIsOpen(false); reset_input_value()}}>
             <CloseIcon className="closeIcon" fontSize="large" />
           </IconButton>
           
