@@ -3,6 +3,13 @@
   "count": 4,
   "confignow": 0,
   "data": {
+    "testtest": {
+      "order": 1,
+      "ip": "192.168.1.99",
+      "mac": "255.255.255.0",
+      "gateway": "192.168.1.1",
+      "ssid": "xg100n-42b3dd-1"
+    },
     "aaa": {
       "order": 2,
       "ip": "192.168.1.99",
@@ -15,7 +22,7 @@
       "ip": "dhcp",
       "mac": "",
       "gateway": "",
-      "ssid": "xg100n-42b3dd-3"
+      "ssid": "xg100n-42b3dd-2"
     },
     "てっっっっｓ": {
       "order": 5,
@@ -23,13 +30,6 @@
       "mac": "",
       "gateway": "",
       "ssid": "xg100n-42b3dd-3"
-    },
-    "testtest": {
-      "order": 1,
-      "ip": "192.168.1.99",
-      "mac": "255.255.255.0",
-      "gateway": "192.168.1.1",
-      "ssid": "xg100n-42b3dd-1"
     }
   }
 }

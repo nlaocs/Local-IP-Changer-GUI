@@ -89,27 +89,11 @@ function gateway_regex(gateway: string): boolean {
   return gateway_pattern.test(gateway);
 }
 
-function useAsyncData<T>(promise: Promise<T>) {
-  const [data, setData] = useState<T | null>(null);
-
-  useEffect(() => {
-    promise.then(setData);
-  }, [promise]);
-
-  return data;
-}
-
-
-
-
 const get_config_data_Data = async (name: string) => {
   const configData: Data = await get_config_data(name);
   console.log(configData);
   return configData;
 }
-
-
-
 
 function App() {
   useEffect(() => {
@@ -369,6 +353,7 @@ function App() {
 
   // {configData.map((name) => <DataItem key={name} name={name} />)}
 
+  
 
   // tauri--------------------------------------------------------
   const [deviceList, setDeviceList] = React.useState<string[]>([]);
@@ -410,7 +395,7 @@ function App() {
       else {
         setEdittingSelectedValue('manual');
         setEdittingIP(data.ip);
-        setEdittingSubnetmask(data.gateway);
+        setEdittingSubnetmask(data.mac);
         setEdittingGateway(data.gateway);
         console.log("debug: " + data.ip + ", " + data.gateway + ", " + data.ssid);
       }
@@ -435,6 +420,7 @@ function App() {
     invoke('t_add_config_data', {name: name, ip: ip, subnetmask: subnetmask, gateway: gateway, ssid: ssid});
   }
 
+  
 
   const [configData, setConfigData] = React.useState<string[]>([]);
   const get_config_data_string = async () => {
@@ -443,7 +429,15 @@ function App() {
     setConfigData(configData);
   }
 
+  const edit_config_data = (name: string, ip: string, mac: string, gateway: string, ssid: string) => {
+    invoke('t_edit_config_data', {name: name, ip: ip, mac: mac, gateway: gateway, ssid: ssid});
+    get_config_data_string();
+  }
+  
 
+  
+
+  
   // -------------------------------------------------------------
 
   document.addEventListener('contextmenu', event => event.preventDefault());
@@ -454,7 +448,7 @@ function App() {
       </div>
       <div className="container">
 
-      {configData.map((name) => <DataItem key={name} name={name} />)}
+      {configData}
       
         <div className="settings-container">
           <div className="settingbutton" onClick={push_settings_button}>

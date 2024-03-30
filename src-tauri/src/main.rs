@@ -187,6 +187,20 @@ fn add_config_data(name: String, ip: String, mac: String, gateway: String, ssid:
     test_data.set_data(&name);
 }
 
+fn edit_config_data(name: String, ip: String, mac: String, gateway: String, ssid: String) {
+    let mut config = get_config();
+    let data = config.get_config_data(&name);
+    let order = data.order;
+    let test_data: Data = Data {
+        order,
+        ip,
+        mac,
+        gateway,
+        ssid
+    };
+    test_data.set_data(&name);
+}
+
 fn check_have_data(name: &str) -> bool {
     let config = get_config();
     let data_name = config.get_data_name();
@@ -256,25 +270,15 @@ fn t_get_config_data(name: String) -> String {
 
 #[tauri::command]
 fn t_remove_config_data(name: String) {
-    
     config_remove_data(&name);
 }
 
+#[tauri::command]
+fn t_edit_config_data(name: String, ip: String, mac: String, gateway: String, ssid: String) {
+    edit_config_data(name, ip, mac, gateway, ssid);
+}
+
 // ------------------------------------------------------------------------
-
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
-#[tauri::command]
-fn testfn(ip: String, mac: String, gateway: String, ssid: String) {
-    println!("SSID: {}", ssid);
-    println!("IP: {}", ip);
-    println!("MAC: {}", mac);
-    println!("Gateway: {}", gateway);
-}
 
 #[tauri::command]
 fn testfn2(test: String) {
@@ -286,9 +290,7 @@ fn main() {
     config_create();
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            testfn,
             testfn2, 
-            greet, 
             t_get_device_list, 
             t_get_ssid, 
             t_set_config_device,
@@ -297,7 +299,8 @@ fn main() {
             t_check_have_data,
             t_get_data_list,
             t_get_config_data,
-            t_remove_config_data
+            t_remove_config_data,
+            t_edit_config_data
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
