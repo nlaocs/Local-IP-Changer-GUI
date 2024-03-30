@@ -3,6 +3,34 @@
   "count": 8,
   "confignow": 0,
   "data": {
+    "test111": {
+      "order": 7,
+      "ip": "dhcp",
+      "mac": "",
+      "gateway": "",
+      "ssid": "xg100n-42b3dd-1"
+    },
+    "asdasdasd": {
+      "order": 8,
+      "ip": "dhcp",
+      "mac": "",
+      "gateway": "",
+      "ssid": "xg100n-42b3dd-1"
+    },
+    "aaa": {
+      "order": 2,
+      "ip": "192.168.1.99",
+      "mac": "255.255.255.0",
+      "gateway": "192.168.1.1",
+      "ssid": "xg100n-42b3dd-3"
+    },
+    "テスト用１": {
+      "order": 6,
+      "ip": "dhcp",
+      "mac": "",
+      "gateway": "",
+      "ssid": "xg100n-42b3dd-3"
+    },
     "てしゅと": {
       "order": 4,
       "ip": "dhcp",
@@ -23,34 +51,6 @@
       "mac": "",
       "gateway": "",
       "ssid": "xg100n-42b3dd-3"
-    },
-    "test111": {
-      "order": 7,
-      "ip": "dhcp",
-      "mac": "",
-      "gateway": "",
-      "ssid": "xg100n-42b3dd-1"
-    },
-    "テスト用１": {
-      "order": 6,
-      "ip": "dhcp",
-      "mac": "",
-      "gateway": "",
-      "ssid": "xg100n-42b3dd-3"
-    },
-    "aaa": {
-      "order": 2,
-      "ip": "192.168.1.99",
-      "mac": "255.255.255.0",
-      "gateway": "192.168.1.1",
-      "ssid": "xg100n-42b3dd-3"
-    },
-    "asdasdasd": {
-      "order": 8,
-      "ip": "dhcp",
-      "mac": "",
-      "gateway": "",
-      "ssid": "xg100n-42b3dd-1"
     }
   }
 }

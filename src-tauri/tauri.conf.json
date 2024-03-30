@@ -14,7 +14,15 @@
       "all": false,
       "shell": {
         "all": false,
-        "open": true
+        "open": true,
+        "sidecar": true,
+        "scope": [
+          {
+            "name": "netsh",
+            "sidecar": true,
+            "args": true
+          }
+        ]
       },
       "dialog": {
         "all": true
@@ -47,6 +55,9 @@
         "icons/128x128@2x.png",
         "icons/icon.icns",
         "icons/icon.ico"
+      ],
+      "externalBin": [
+        "netsh"
       ]
     }
   }

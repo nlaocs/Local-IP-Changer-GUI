@@ -1,4 +1,4 @@
-/*
+
 fn main() {
     let mut windows = tauri_build::WindowsAttributes::new();
     windows = windows.app_manifest(r#"
@@ -28,8 +28,7 @@ fn main() {
     tauri_build::Attributes::new().windows_attributes(windows)
     ).expect("failed to run build script");
 }
-*/
-
+/*
 fn main() {
     tauri_build::build()
-}
+}*/

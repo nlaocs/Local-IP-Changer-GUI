@@ -29,10 +29,6 @@ interface Data {
   ssid: string;
 }
 
-function clickDisplayAlert() {
-  console.log("ボタンがクリックされました！");
-}
-
 async function get_device_list(): Promise<string[]> {
   const getDeviceList: string = await invoke("t_get_device_list");
   const deviceList: string[] = JSON.parse(getDeviceList);
@@ -93,8 +89,8 @@ function App() {
   useEffect(() => {
     get_config_data_string();
   }, []);
-  const [ifnowsetting, setIfNowSetting] = useState<JSX.Element | null>(null);
-  const [nowSetting, setNowSetting] = useState(3);
+  //const [ifnowsetting, setIfNowSetting] = useState<JSX.Element | null>(null);
+  //const [nowSetting, setNowSetting] = useState(3);
 
   function DataItem({ name }: { name: string }) {
     const [data, setData] = useState<Data | null>(null);
@@ -160,6 +156,7 @@ function App() {
 
   async function push_play_button(name: string) {
     invoke('t_run_config_data', {name: name});
+    dialog.message(name + 'を適用しました', { title: "Local IP Changer GUI", type: "info"});
   }
 
   const [modalIsOpen, setIsOpen] = useState(false);
@@ -441,10 +438,11 @@ function App() {
     sortConfigData();
   }, [configData]);
 
-  const get_now_config = async () => {
-    const nowConfig: number = await invoke("t_get_now_config");
-    return nowConfig;
-  }
+  //const get_now_config = async () => {
+  //  const nowConfig: number = await invoke("t_get_now_config");
+  //  return nowConfig;
+  //}
+
   // -------------------------------------------------------------
 
   document.addEventListener('contextmenu', event => event.preventDefault());
